@@ -1,14 +1,8 @@
 #require 'sexp_processor'
-class MethodProcess < SexpInterpreter
+class MethodProcess < BasicProcess
   
-  def initialize()
-    super
-    self.default_method = "process_nothing"
-    self.warn_on_default = false
-    @paramProcess = ParamProcess.new
-    @varAssignmentProcess = VarAssignmentProcess.new
-    @method = nil
-    
+  def initialize(relatedFile)
+    super(relatedFile)
   end
   
   def initProcess(ast, clazz)
@@ -18,55 +12,96 @@ class MethodProcess < SexpInterpreter
   end
   
   def process_nothing(exp)
-    exp.each_sexp do |sexp|
-      process(sexp)
-    end
-  end
-  
-  def process_call(exp)
-    _, _, methodCall = exp
-    if(![:==].include?(methodCall))
-      linkedFunctions = LinkedFunctionProcess.new.initProcess(exp, @clazz, @method)
-      puts "[CALL] #{linkedFunctions.to_s}"
-      @method.addStatement(linkedFunctions)
-    end
-  end
-  def process_return(exp)
-    _, returnExp = exp
-    if(returnExp[0] == :str ||returnExp[0] == :lit)
-      returnStatement = ReturnDefinition.new(ValueDefinition.new(returnExp[1]))
-      puts "[RETURN] Retorno #{returnStatement.to_s} do método #{@method.name} adicionado"
-      @method.addReturn(returnStatement);
-    elsif(returnExp[0] == :lvar)
-      var = @method.getVariable(returnExp[1])
-      if(!var.nil?)
-        returnStatement = ReturnDefinition.new(var)
-        @method.addReturn(returnStatement);
-        puts "[RETURN] Retorno #{returnStatement.to_s} do método #{@method.name} adicionado"  
-      else
-        puts "[ERROR] Retorno de variável não cadastrada!"
+    if(!([:for, :masgn].include?(exp[0])))
+      exp.each_sexp do |sexp|
+        process(sexp)
       end
     end
   end
   
-  def process_defn(exp)
-    _, methodName, args, *scope = exp
-    params = @paramProcess.initProcess(args)
-    @method = MethodDefinition.new(methodName, params)
-    puts "[DEFN] Método #{@method.name} criado na classe #{@clazz.name}"
-    params.each do |var|
-      puts "[PARAM] Parâmetro #{var.name} adicionado no método #{@method.name}"
+  def process_iter(exp)
+    _, iterExp = exp
+    iterate, blocks = IterationProcess.new(@relatedFile).initProcess(exp, @method, @clazz)
+    @method.addStatement(iterate)
+    blocks.each do |block|
+      if(!block.nil?)
+        process(block)
+      end
     end
-    scope.map {|subTree| process(subTree) if subTree.class == Sexp}
+  end
+
+  def process_call(exp)
+    _, _, methodCall = exp
+    if(![:==].include?(methodCall))
+      linkedFunctions, blocks = LinkedFunctionProcess.new(@relatedFile).initProcess(exp, @method, @clazz)
+      @method.addStatement(linkedFunctions)
+      blocks.each do |block|
+        process(block)
+      end
+    end
+  end
+
+
+  def process_return(exp)
+    _, returnExp = exp
+    addReturn(returnExp)
   end
   
+  def addReturn(returnExp)
+    if(!returnExp.nil?) #retorna algo
+      if(returnExp[0] == :str ||returnExp[0] == :lit)
+        returnStatement = ReturnDefinition.new(@relatedFile, returnExp, ValueDefinition.new(returnExp[1]))
+        @method.addReturn(returnStatement);
+      elsif(returnExp[0] == :lvar)
+        var = @method.getVariable(returnExp[1])
+        if(!var.nil?)
+          returnStatement = ReturnDefinition.new(@relatedFile, returnExp, var)
+          @method.addReturn(returnStatement)
+        else
+          #puts "[ERROR] Retorno de variável não cadastrada!"
+        end
+      elsif(returnExp[0] == :array)
+        returnStatement,_  = ArrayProcess.new(@relatedFile).initProcess(returnExp, @method, @clazz)
+        @method.addReturn(returnStatement)
+      end
+    end
+  end
+
+  def getLastStm(exps)
+    lastStm = nil
+    exps.each do |exp|
+      if(exp.class == Sexp)
+        lastStm = exp
+      end
+    end
+    return lastStm
+  end
+
+  def process_defn(exp)
+    _,methodName, args, *scope = exp
+    params = ParamProcess.new(@relatedFile).initProcess(args)
+    @method = MethodDefinition.new(@relatedFile, exp, methodName, params)
+    scope.map {|subTree| process(subTree) if subTree.class == Sexp}
+    ImplicitReturn.check_implicit_return(getLastStm(scope)).each do |implicitReturn|
+      addReturn(implicitReturn)
+    end
+  end
+  
+  def process_defs(exp)
+    _, _,methodName, args, *scope = exp
+    params = ParamProcess.new(@relatedFile).initProcess(args)
+    @method = MethodDefinition.new(@relatedFile, exp, methodName, params)
+    scope.map {|subTree| process(subTree) if subTree.class == Sexp}
+  end
+
   def process_lasgn(exp)
-    varAssignment = VarAssignmentProcess.new.initProcess(exp, @clazz, @method)
+    varAssignment, blocks = VarAssignmentProcess.new(@relatedFile).initProcess(exp, @method, @clazz)
     if(@method.getVariable(varAssignment.var.name).nil?)
       @method.addVariable(varAssignment.var)
-      puts "[VAR] Variável #{varAssignment.var.name} foi adicionada no método #{@method.name}"
     end
     @method.addStatement(varAssignment)
-    puts "[ATTR] Atribuição #{varAssignment.to_s} foi adicionada no método #{@method.name}"
+    blocks.each do |block|
+      process(block)
+    end
   end
 end

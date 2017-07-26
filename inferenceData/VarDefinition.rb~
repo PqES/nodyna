@@ -1,10 +1,9 @@
-class VarDefinition < BasicDefinition
+class VarDefinition
   include InferData
   attr_reader :name, :inferenceTypes, :inferenceValues
   
-  def initialize(relatedFile,relatedExp, name)
-    super(relatedFile,relatedExp)
-    initInferModule()
+  def initialize(name)
+    initInference()
     @name = name.to_s
   end
   
@@ -17,15 +16,19 @@ class VarDefinition < BasicDefinition
     return false
   end
   
-  def recommend(allClasses)
+  def recommend()
 
   end
   
   def mergeInfersFromVar(varDefinition)
     if(!varDefinition.nil?)
-      newInfers = addInfers(varDefinition.inference)
+      newInfers = addInfers(varDefinition.inferenceTypes, varDefinition.inferenceValues)
       return newInfers
     end
     return false
+  end
+
+  def publicAddInfers(infers, values)
+    return addInfers(infers, values)
   end
 end

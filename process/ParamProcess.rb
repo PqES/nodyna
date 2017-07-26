@@ -1,9 +1,8 @@
 #require 'sexp_processor'
-class ParamProcess < SexpInterpreter
+class ParamProcess < BasicProcess
   
-  def initialize()
-    super
-    self.default_method = "process_nothing"
+  def initialize(relatedFile)
+    super(relatedFile)
   end
   
   def initProcess(ast)
@@ -20,9 +19,9 @@ class ParamProcess < SexpInterpreter
     _, *args = exp
     args.each do |arg|
       if(arg.class == Symbol)
-        @params << (VarDefinition.new(arg))
+        @params << (VarDefinition.new(@relatedFile, exp, arg))
       else
-        puts "argumento nao eh symbol, mas sim #{arg.class}"
+        #puts "argumento nao eh symbol, mas sim #{arg.class}"
       end
     end
   end

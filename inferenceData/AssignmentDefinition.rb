@@ -1,21 +1,29 @@
-class AssignmentDefinition
+class AssignmentDefinition < BasicDefinition
   include InferData
   attr_reader :var, :value
   
-  
-  def initialize(var, value)
+  def initialize(relatedFile,relatedExp, var, value)
+    super(relatedFile,relatedExp)
+    initInferModule()
     @var = var
     @value = value
   end
   
   def infer(allClasses, className, methodName)
-    typeInfers, valueInfers, newInfers = @value.infer(allClasses, className, methodName)
-    newInfers =  newInfers || @var.addInfers(typeInfers, valueInfers)
-    return typeInfers, valueInfers, newInfers
+    newInfers = false
+    if(!@value.nil?)
+      newInfers = @value.infer(allClasses, className, methodName)
+      addInfers(@value.inference)
+      @var.addInfers(@value.inference)
+      return newInfers
+    end
+    return newInfers
   end
   
-  def recommend(allClasses, className, methodName)
-    @value.recommend(allClasses, className, methodName)
+  def recommend(allClasses)
+    if(!@value.nil?)
+      @value.recommend(allClasses)
+    end
   end
   
   def to_s

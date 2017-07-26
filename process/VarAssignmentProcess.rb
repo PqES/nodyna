@@ -1,35 +1,41 @@
 #require 'sexp_processor'
-class VarAssignmentProcess < SexpInterpreter
+class VarAssignmentProcess < BasicProcess
   
-  def initialize
-    super
-    self.default_method = "process_nothing"
+  def initialize(relatedFile)
+    super(relatedFile)
   end
   
-  def initProcess(ast, currentClass, currentMethod)
-    @result = nil
-    @currentClass = currentClass
-    @currentMethod = currentMethod
+  def initProcess(ast, scope, clazz)
+    @scope = scope
+    @clazz = clazz
+    @assignment = nil
+    @blocks = []
     process(ast)
-    return @result
+    return @assignment, @blocks
   end
   
   def process_nothing(exp)
-    
+    exp.each_sexp do |sexp|
+      process(sexp)
+    end
   end
   
   def process_lasgn(exp)
     _, varName, valueToAssign = exp
-    var = @currentMethod.getVariable(varName)
+    var = @scope.getVariable(varName)
     if(var.nil?)
-      var = VarDefinition.new(varName) 
+      var = VarDefinition.new(@relatedFile, exp, varName) 
     end
-    if(valueToAssign[0] != :call)
-      value = ValueDefinition.new(valueToAssign[1])
-      @result = AssignmentDefinition.new(var, value)
-    else
-      linkedFunctions = LinkedFunctionProcess.new.initProcess(valueToAssign, @currentClass, @currentMethod)
-      @result = AssignmentDefinition.new(var, linkedFunctions)
+    value = nil
+    if(valueToAssign[0] == :lit || valueToAssign[0] == :str)
+      value = LiteralDefinition.new(@relatedFile, exp, valueToAssign[1])
+    elsif(valueToAssign[0] == :array)
+      value = ArrayProcess.new(@relatedFile).initProcess(valueToAssign, @scope, @clazz)
+    elsif(valueToAssign[0] == :call)
+      value, @blocks = LinkedFunctionProcess.new(@relatedFile).initProcess(valueToAssign, @scope, @clazz)
+    elsif(valueToAssign[0] == :iter)
+      value, @blocks = IterationProcess.new(@relatedFile).initProcess(valueToAssign, @scope, @clazz)
     end
+    @assignment = AssignmentDefinition.new(@relatedFile, exp, var, value)
   end
 end

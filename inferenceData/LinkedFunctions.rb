@@ -1,71 +1,39 @@
-class LinkedFunctions
+class LinkedFunctions < BasicDefinition
   include InferData
   
-  def initialize(root, functionsCalled)
+  def initialize(relatedFile,relatedExp, root, functionsCalled)
+    super(relatedFile,relatedExp)
+    initInferModule()
     @functions = functionsCalled
-    @root = root #var definition
+    @root = root
+    @rootInference = Inference.new
   end
-  
   
   def infer(allClasses, className, methodName)
     newInfers = false
     if(!@root.nil?)
-      typeInferences, valueInferences, _ = @root.infer(allClasses, className, methodName)
+      newInfers = @root.infer(allClasses, className, methodName) || newInfers
+      @rootInference = @root.inference
     else
-      typeInferences = Set.new
-      valueInferences = Set.new
-      typeInferences << className
+      @rootInference.addType(className)
+      @rootInference.addValue(ConstDefinition.new(nil,nil,className))
     end
-    for i in 0..@functions.count-1
-      func = @functions[i]
-      if(func.functionName == "new")
-        next
+    inference = @rootInference
+    @functions.each do |func|
+      inference.types.each do |className|
+        newInfers = func.infer(allClasses, className, methodName, inference) || newInfers
+        inference = func.inference
       end
-      newTypeInferences = Set.new
-      newValueInferences = Set.new
-      typeInferences.each do |className|
-        types, values, tempNewInfers = func.infer(allClasses, className, methodName)
-        newTypeInferences.merge(types)
-        newValueInferences.merge(values)
-        newInfers = newInfers || tempNewInfers
-      end
-      typeInferences = newTypeInferences
-      valueInferences = newValueInferences
     end
-    return typeInferences, valueInferences, newInfers
+    newInfers = addInfers(inference) || newInfers
+    return newInfers
   end
   
-  def recommend(allClasses, className, methodName)
-    if(!@root.nil?)
-      typeInferences,  _ = @root.infer(allClasses, className, methodName)
-    else
-      typeInferences = Set.new
-      typeInferences << className
-    end
-    for i in 0..@functions.count-1
-      func = @functions[i]
-      if(func.functionName == "new")
-        next
-      elsif(func.functionName == "send")
-        Recommendation.recommendSend(allClasses, className, methodName, typeInferences, func)
-        break
-      elsif(func.functionName == "const_get")
-        Recommendation.recommendConstGet(allClasses, className, methodName, typeInferences, func)
-        break
-      elsif(func.functionName == "const_set")
-        Recommendation.recommendConstSet(allClasses, className, methodName, typeInferences, func)
-        break
-      end
-      newTypeInferences = Set.new
-      newValueInferences = Set.new
-      typeInferences.each do |className|
-        types, values, tempNewInfers = func.infer(allClasses, className, methodName)
-        newTypeInferences.merge(types)
-        newValueInferences.merge(values)
-        newInfers = newInfers || tempNewInfers
-      end
-      typeInferences = newTypeInferences
-      valueInferences = newValueInferences
+  def recommend(allClasses)
+    inference = @rootInference
+    @functions.each do |func|
+      func.recommend(allClasses, inference)
+      inference = func.inference
     end
   end
   
@@ -77,6 +45,6 @@ class LinkedFunctions
     @functions.each do |functionCalled|
       str += "#{functionCalled.to_s}."
     end
-    return str.chop #chop => remove último carácter da string
+    return str.chop
   end
 end
