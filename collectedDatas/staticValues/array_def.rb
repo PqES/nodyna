@@ -1,7 +1,8 @@
-require_relative "basic_data"
-require_relative "inferable"
+require_relative "static_values"
+require_relative "../../collectedDatas/infers/inference_set"
 class ArrayDef < BasicData
   include Inferable
+  include StaticValues
   attr_reader :elements
 
   def initialize(rbfile, line, exp, elements)
@@ -15,15 +16,27 @@ class ArrayDef < BasicData
     end
   end
 
-  def infersOnEach
-    return @elementInfers.infers
-  end
-
+  #abstract
   def onReceiveNotification(obj)
     newInfers = @elementInfers.addAllInfer(obj.inferenceSet.infers)
     if(newInfers)
       notifyNewInfers()
     end
+  end
+
+  #abstract
+  def isObjectInsance?()
+    return true
+  end
+
+  #abstract
+  def isSelfInstance?()
+    return false
+  end
+
+
+  def infersOnEach
+    return @elementInfers.infers
   end
 
   def printCollectedData()

@@ -1,4 +1,4 @@
-require_relative "inferable"
+require_relative "../../collectedDatas/infers/inferable"
 class MethodDef < BasicData
   include Inferable
 

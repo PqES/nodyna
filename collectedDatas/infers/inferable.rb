@@ -1,7 +1,7 @@
-require_relative "basic_data"
+require_relative "../basic_data"
 require_relative "infer_data"
 require_relative "inference_set"
-require_relative "../collectedDatas/infer_data"
+require_relative "infer_data"
 require "set"
 
 module Inferable

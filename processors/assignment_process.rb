@@ -1,9 +1,9 @@
 require "singleton"
 require_relative "basic_process"
 require_relative "util_process"
-require_relative "../collectedDatas/variable"
-require_relative "../collectedDatas/literal_def"
-require_relative "../collectedDatas/array_def"
+require_relative "../collectedDatas/dynamicValues/variable"
+require_relative "../collectedDatas/staticValues/literal_def"
+require_relative "../collectedDatas/staticValues/array_def"
 
 class VarAssignmentProcess < BasicProcess
 

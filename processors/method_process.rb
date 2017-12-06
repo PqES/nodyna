@@ -2,8 +2,8 @@ require "singleton"
 require_relative "basic_process"
 require_relative "assignment_process"
 require_relative "linked_function_process"
-require_relative "../collectedDatas/method_def"
-require_relative "../collectedDatas/variable"
+require_relative "../collectedDatas/structures/method_def"
+require_relative "../collectedDatas/dynamicValues/variable"
 class MethodProcess < BasicProcess
 
   def initProcess(ast, relatedFile, clazz)

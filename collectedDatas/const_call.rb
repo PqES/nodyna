@@ -1,15 +1,30 @@
-require_relative "inferable"
-require_relative "infer_data"
+require_relative "infers/inferable"
+require_relative "infers/infer_data"
 require_relative "../collectedDatas/discovered_classes"
-require_relative "../collectedDatas/self_instance"
+
 class ConstCall < BasicData
   include Inferable
+
   def initialize(rbfile, line, exp, values, classContext)
     super(rbfile, line, exp)
     initInferableModule()
     @values = values
     @fullName = generateName(@values.size - 1)
     @classContext = classContext
+    @isConstant = false
+    @isSelfInstance = false
+  end
+
+  def value
+    return @fullName
+  end
+
+  def isDynamic?()
+    return @isConstant
+  end
+
+  def isStatic?()
+    return @isSelfInstance
   end
 
   def onReceiveNotification(obj)
@@ -36,15 +51,21 @@ class ConstCall < BasicData
     innerClazz = DiscoveredClasses.instance.getClassByFullName("#{@classContext.fullName}::#{@fullName}".to_sym())
     if(!clazz.nil?)
       addAllInfer(SelfInstance.new(clazz.fullName).infers)
+      @isSelfInstance = true
     elsif(!constantWithFullName.nil?)
       constantWithFullName.addListener(self)
+      @isConstant = true
     elsif (!innerClazz.nil?)
       addAllInfer(SelfInstance.new(innerClazz.fullName).infers)
+      @isSelfInstance = true
     else
       clazz = DiscoveredClasses.instance.getClassByFullName("#{@classContext.fullName}::#{generateName(@values.size - 2)}")
       if(!clazz.nil?)
         constantWithAlias = clazz.getConstantByName(@values.last)
-        constantWithAlias.addListener(self) if !constantWithAlias.nil?
+        if(!constantWithAlias.nil?)
+          constantWithAlias.addListener(self)
+          @isConstant = true
+        end
       end
     end
   end

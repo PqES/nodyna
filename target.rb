@@ -1,6 +1,10 @@
 class Test
   def main()
-    x = Test.new()
-    x.class.const_set(:pi, 3.14)
+    x = :PI
+    obj = Test
+    Test.const_get(:PI)
+    Test.const_get(x)
+    obj.const_get(:PI)
+    obj.const_get(x)
   end
 end

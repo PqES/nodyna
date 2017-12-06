@@ -1,6 +1,8 @@
-require_relative "inferable"
+require_relative "../../collectedDatas/infers/inferable"
+require_relative "dynamic_values"
 class Variable < BasicData
   include Inferable
+  include DynamicValues
   attr_reader :name
   attr_accessor :hasGetter, :hasSetter
   def initialize(rbfile, line, exp, name)

@@ -1,9 +1,10 @@
-require_relative "inferable"
-require_relative "basic_data"
+require_relative "../../collectedDatas/infers/inferable"
+require_relative "dynamic_values"
 
 class ConstantDef < BasicData
-
   include Inferable
+  include DynamicValues
+
   attr_reader :name
   attr_writer :private
 

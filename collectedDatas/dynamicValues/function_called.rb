@@ -1,9 +1,13 @@
-require_relative "inferable"
-require_relative "discovered_classes"
-require_relative "infer_data"
-require_relative "object_instance"
+require_relative "../../collectedDatas/infers/inferable"
+require_relative "../../collectedDatas/discovered_classes"
+require_relative "../../collectedDatas/infers/infer_data"
+require_relative "../../collectedDatas/staticValues/object_instance"
+require_relative "dynamic_values"
 class FunctionCalled < BasicData
+
   include Inferable
+  include DynamicValues
+
   attr_reader :methodName
 
   def initialize(rbfile, line, exp, methodName, parameters)

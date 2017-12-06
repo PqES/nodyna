@@ -1,4 +1,4 @@
-require_relative "basic_data"
+require_relative "../basic_data"
 class ClassDef < BasicData
 
   attr_reader :name, :fullName, :instanceMethods, :staticMethods, :instanceVariables, :staticVariables, :statements, :innerClasses

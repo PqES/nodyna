@@ -1,7 +1,10 @@
-require_relative "inferable"
-require_relative "infer_data"
+require_relative "../../collectedDatas/infers/inferable"
+require_relative "../../collectedDatas/infers/infer_data"
+require_relative "static_values"
 class LiteralDef < BasicData
   include Inferable
+  include StaticValues
+
   attr_reader :value
 
   def initialize(rbfile, line, exp, value)

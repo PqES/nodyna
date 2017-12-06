@@ -1,12 +1,12 @@
 require "singleton"
 require_relative "basic_process"
 require_relative "util_process"
-require_relative "../collectedDatas/literal_def"
-require_relative "../collectedDatas/linked_functions"
-require_relative "../collectedDatas/function_called"
-require_relative "../collectedDatas/ConstCall"
-require_relative "../collectedDatas/object_instance"
-require_relative "../collectedDatas/self_instance"
+require_relative "../collectedDatas/staticValues/literal_def"
+require_relative "../collectedDatas/dynamicValues/linked_functions"
+require_relative "../collectedDatas/dynamicValues/function_called"
+require_relative "../collectedDatas/const_call"
+require_relative "../collectedDatas/staticValues/object_instance"
+require_relative "../collectedDatas/staticValues/self_instance"
 
 class LinkedFunctionProcess < BasicProcess
 

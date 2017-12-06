@@ -1,6 +1,8 @@
-require_relative "inferable"
+require_relative "../../collectedDatas/infers/inferable"
+require_relative "dynamic_values"
 class LinkedFunctions < BasicData
   include Inferable
+  include DynamicValues
   attr_reader :root, :functions
   def initialize(rbfile, line, exp, root, functions)
     super(rbfile, line, exp)

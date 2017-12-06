@@ -9,7 +9,11 @@ class InferData
 
 
   def isObjectInstance?()
-    return obj.class != SelfInstance
+    return !isSelfInstance?()
+  end
+
+  def isSelfInstance?()
+    return obj.class == SelfInstance || (obj.class == ConstCall && obj.isSelfInstance?)
   end
 
   def isFromArray?()

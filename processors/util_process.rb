@@ -1,7 +1,7 @@
-require_relative "../collectedDatas/ConstCall"
-require_relative "../collectedDatas/linked_functions"
-require_relative "../collectedDatas/literal_def"
-require_relative "../collectedDatas/array_def"
+require_relative "../collectedDatas/const_call"
+require_relative "../collectedDatas/dynamicValues/linked_functions"
+require_relative "../collectedDatas/staticValues/literal_def"
+require_relative "../collectedDatas/staticValues/array_def"
 class UtilProcess
 
   def self.getValue(exp, relatedFile, clazz, method)

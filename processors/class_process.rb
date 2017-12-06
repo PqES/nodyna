@@ -1,8 +1,8 @@
 require_relative "../collectedDatas/discovered_classes"
-require_relative "../collectedDatas/class_def"
+require_relative "../collectedDatas/structures/class_def"
 require_relative "basic_process"
 require_relative "method_process"
-require_relative "../collectedDatas/constant_def"
+require_relative "../collectedDatas/dynamicValues/constant_def"
 
 class ClassProcess < BasicProcess
 

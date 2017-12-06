@@ -1,10 +1,37 @@
+require "singleton"
 require_relative "send_module"
 require_relative "const_set_module"
-class Recommendation
-  extend SendModule
-  extend ConstSetModule
+require_relative "const_get_module"
 
-  def self.recommend()
+class Recommendation
+  include Singleton
+  include SendModule
+  include ConstSetModule
+  include ConstGetModule
+
+  def initValues()
+    @totalDynamicStatements = {}
+    @safeRecommendations = {}
+    @unsafeRecommendations = {}
+    [:class_variable_get, :class_variable_set, :const_set, :const_get,
+    :instance_variable_set, :instance_variable_get, :send].each do |dynamicStatement|
+      @totalDynamicStatements[dynamicStatement] = 0
+      @safeRecommendations[dynamicStatement] = 0
+      @unsafeRecommendations[dynamicStatement] = 0
+    end
+  end
+
+  def printResults()
+    puts "Resultado Geral:"
+    [:class_variable_get, :class_variable_set, :const_set, :const_get,
+     :instance_variable_set, :instance_variable_get, :send].each do |dynamicStatement|
+      puts "#{dynamicStatement}: #{@totalDynamicStatements[dynamicStatement]}; Safes: #{@safeRecommendations[dynamicStatement]}; Unsafes: #{@unsafeRecommendations[dynamicStatement]}"
+    end
+  end
+
+  def recommend()
+
+    initValues()
     DiscoveredClasses.instance.classes.each do |className, clazz|
       clazz.instanceMethods.each do |methodName, method|
         method.statements.each do |statement|
@@ -22,7 +49,7 @@ class Recommendation
     end
   end
 
-  def self.recommendLinkedFunction(statement)
+  def recommendLinkedFunction(statement)
     root = statement.root
     statement.functions.each do |func|
       self.recommendFunction(statement, root, func)
@@ -30,27 +57,37 @@ class Recommendation
     end
   end
 
-  def self.recommendFunction(linkedFunction, root, function)
-    success, msg = nil, nil
-    if(function.methodName == :send)
-      puts "send identificado no arquivo #{function.rbfile} linha #{function.line}"
-      success, msg = self.recommendSend(root, function)
-    elsif(function.methodName == :instance_variable_get)
-    elsif(function.methodName == :instance_variable_set)
-    elsif(function.methodName == :class_variable_get)
+  def recommendFunction(linkedFunction, root, function)
+    functionToCall = nil
+    if(function.methodName == :class_variable_get)
     elsif(function.methodName == :class_variable_set)
     elsif(function.methodName == :const_set)
-      puts "const_set identificado no arquivo #{function.rbfile} linha #{function.line}"
-      success, msg = self.recommendConstSet(linkedFunction, root, function)
+      functionToCall = :recommendConstSet
     elsif(function.methodName == :const_get)
+      functionToCall = :recommendConstGet
+    elsif(function.methodName == :instance_variable_get)
+    elsif(function.methodName == :instance_variable_set)
+    elsif(function.methodName == :send)
+      functionToCall = :recommendSend
     end
-    if(!success.nil? && !msg.nil?)
+    if(!functionToCall.nil?)
+      puts "#{function.methodName} indetificado no arquivo #{function.rbfile} linha #{function.line}"
+      @totalDynamicStatements[function.methodName] += 1
+      success, safeRecommendation, msg = self.send(functionToCall, linkedFunction, root, function)
       if(success)
-        puts "Sugestao:\n#{msg}"
+        if(safeRecommendation)
+          @safeRecommendations[function.methodName] += 1
+          puts "Sugestao [safe]:\n#{msg}"
+        else
+          @unsafeRecommendations[function.methodName] += 1
+          puts "Sugestao [unsafe]:\n#{msg}"
+        end
       else
-        puts msg
+        puts "#{msg}"
       end
       puts "#{"=" * 80}"
     end
   end
+
+
 end
