@@ -72,7 +72,7 @@ class ClassDef < BasicData
 
   def getLocalVariableByName(varName)
     if(@localVariables.has_key?(varName))
-      return @instanceVariables[varName]
+      return @localVariables[varName]
     end
     return nil
   end
@@ -104,6 +104,9 @@ class ClassDef < BasicData
     @constants.each do |constName, const|
       str = "#{str}\n  constant (private: #{const.isPrivate?}) #{const.printCollectedData()}"
     end
+    @localVariables.each do |varName, var|
+      str = "#{str}\n  local variable #{var.printCollectedData()}"
+    end
     @staticVariables.each do |varName, var|
       str = "#{str}\n  static variable (Getter: #{var.hasGetter?} Setter: #{var.hasSetter?}) #{var.printCollectedData()}"
     end
@@ -111,13 +114,13 @@ class ClassDef < BasicData
       str = "#{str}\n  instance variable (Getter: #{var.hasGetter?} Setter: #{var.hasSetter?}) #{var.printCollectedData()}"
     end
     @instanceMethods.each do |methodName, method|
-      str = "#{str}\n#{method.printCollectedData(2)}"
+      str = "#{str}\n  instance method #{method.printCollectedData()}"
     end
     @staticMethods.each do |methodName, method|
-      str = "#{str}\n#{method.printCollectedData(2)}"
+      str = "#{str}\n  static method #{method.printCollectedData()}"
     end
     @statements.each do |statement|
-      str = "#{str}\n statement #{statement.printCollectedData(2)}"
+      str = "#{str}\n  statement #{statement.printCollectedData()}"
     end
     return str
   end

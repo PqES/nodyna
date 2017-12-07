@@ -28,7 +28,11 @@ class ClassProcess < BasicProcess
     @classStack.push(clazz)
     args.map {|subTree| process(subTree) if subTree.class == Sexp}
     @classStack.pop()
-    @currentClass = @classStack.last
+    if(@classStack.size != 0)
+      @currentClass = @classStack.last
+    else
+      @currentClass = DiscoveredClasses.instance.getClassByFullName("#DefaultClass".to_sym)
+    end
   end
 
   def process_module(exp)
@@ -130,6 +134,18 @@ class ClassProcess < BasicProcess
       end
       @currentClass.addConstant(constant)
     end
+  end
+
+  def process_lasgn(exp)
+    VarAssignmentProcess.new.initProcess(exp, @relatedFile, @currentClass, nil)
+  end
+
+  def process_iasgn(exp)
+    VarAssignmentProcess.new.initProcess(exp, @relatedFile, @currentClass, nil)
+  end
+
+  def process_cvasgn(exp)
+    VarAssignmentProcess.new.initProcess(exp, @relatedFile, @currentClass, nil)
   end
 
   def process_ivar(exp)

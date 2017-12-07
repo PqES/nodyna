@@ -44,6 +44,7 @@ class UtilProcess
   end
 
   def self.processLvar(exp, relatedFile, clazz, method)
+    puts "#{exp[1]} >> #{method.nil?} >> #{clazz.name}"
     return method.nil? ? clazz.getLocalVariableByName(exp[1]) : method.getVariableByName(exp[1])
   end
 

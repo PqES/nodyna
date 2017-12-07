@@ -32,7 +32,7 @@ class LinkedFunctions < BasicData
 
 
   def to_s(functionToStop = nil)
-    if(!@root.nil? && @root.class != ObjectInstance)
+    if(!@root.nil? && @root.class != ObjectInstance && @root.to_s != "")
       str = "#{@root.to_s}."
     else
       str = ""
@@ -48,8 +48,12 @@ class LinkedFunctions < BasicData
   end
 
   def printCollectedData(spaces = 0)
-    if(!@root.nil? && @root.class != ObjectInstance)
-      str = "#{" " * spaces}#{@root.to_s}."
+    if(!@root.nil?)
+      if(@root.to_s != "")
+        str = "#{" " * spaces}#{@root.to_s}."
+      else
+        str = "#{" " * spaces}"
+      end
       strInfers = "#{@root.printInferData()}"
     else
       str = "#{" " * spaces}"

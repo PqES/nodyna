@@ -16,10 +16,14 @@ class VarAssignmentProcess < BasicProcess
 
   def process_lasgn(exp)
     _, varName, valueToAssign = exp
-    variable = @method.getVariableByName(varName)
-    if(variable.nil?)
-      variable = Variable.new(@relatedFile, exp, exp.line, varName)
+    if(!@method.nil?)
+      variable = @method.getVariableByName(varName)
+      variable = Variable.new(@relatedFile, exp, exp.line, varName) if variable.nil?
       @method.addVariable(variable)
+    else
+      variable = @clazz.getLocalVariableByName(varName)
+      variable = Variable.new(@relatedFile, exp, exp.line, varName) if variable.nil?
+      @clazz.addLocalVariable(variable)
     end
     value = UtilProcess.getValue(valueToAssign, @relatedFile, @clazz, @method)
     if(!value.nil?)

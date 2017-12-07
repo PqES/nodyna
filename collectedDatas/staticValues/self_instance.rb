@@ -10,4 +10,8 @@ class SelfInstance
     @value = value
     addInfer(createInfer(:Class, value))
   end
+
+  def to_s
+    return ""
+  end
 end

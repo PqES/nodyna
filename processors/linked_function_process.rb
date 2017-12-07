@@ -34,9 +34,7 @@ class LinkedFunctionProcess < BasicProcess
     formalParameters = []
     params.each do |param|
       parameterValue = UtilProcess.getValue(param, @relatedFile, @clazz, @method)
-      if(!parameterValue.nil?)
-        formalParameters << parameterValue
-      end
+      formalParameters << parameterValue
     end
     return formalParameters
   end

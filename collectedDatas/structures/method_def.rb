@@ -54,8 +54,7 @@ class MethodDef < BasicData
   end
 
   def printCollectedData(spaces = 0)
-    str = instanceMethod ? "#{" " * spaces}instance method" : "#{" " * spaces}static method"
-    str = "#{str} #{@visibility} #{@name}("
+    str = "#{@visibility} #{@name}("
     if(@formalParameters.size > 0)
       @formalParameters.each do |parameter|
         str = "#{str}#{parameter.printCollectedData()},"

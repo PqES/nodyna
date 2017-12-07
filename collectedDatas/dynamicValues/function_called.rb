@@ -88,15 +88,24 @@ class FunctionCalled < BasicData
   def parameters_to_s(init)
     str = ""
     for i in init..@parameters.size - 1
-      str = "#{@parameters[i].to_s},"
+      if(!@parameters[i].nil?)
+        str = "#{@parameters[i].to_s},"
+      else
+        str = "?,"
+      end
     end
     str.chop!
     return str
   end
+
   def printCollectedData()
     str = "#{@methodName}("
     @parameters.each do |param|
-      str = "#{str}#{param.printCollectedData()},"
+      if(!param.nil?)
+        str = "#{str}#{param.printCollectedData()},"
+      else
+        str = "#{str}?,"
+      end
     end
     if(@parameters.size > 0)
       str.chop!
