@@ -1,10 +1,16 @@
 class Test
-  def main()
-    x = :PI
+  def initialize
+    @@a
     obj = Test
-    Test.const_get(:PI)
-    Test.const_get(x)
-    obj.const_get(:PI)
-    obj.const_get(x)
+    x = :@@a
+    x = :@@b
+    Test.class_variable_set(:@@a, 2)
+    obj.class_variable_set(:@@a, 2)
+    Test.class_variable_set(x, 2)
+    obj.class_variable_set(x, 2)
+  end
+
+  def self.a=
+
   end
 end

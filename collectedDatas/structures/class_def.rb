@@ -92,13 +92,23 @@ class ClassDef < BasicData
     @staticVariables[variable.name] = variable
   end
 
+  def getStaticVariableByName(varName)
+    if(@staticVariables.has_key?(varName))
+      return @staticVariables[varName]
+    end
+    return nil
+  end
+
   def printCollectedData(spaces = 0)
     str = "#{" " * spaces}#{@fullName}"
     @constants.each do |constName, const|
       str = "#{str}\n  constant (private: #{const.isPrivate?}) #{const.printCollectedData()}"
     end
+    @staticVariables.each do |varName, var|
+      str = "#{str}\n  static variable (Getter: #{var.hasGetter?} Setter: #{var.hasSetter?}) #{var.printCollectedData()}"
+    end
     @instanceVariables.each do |varName, var|
-      str = "#{str}\n  instance variable (Getter: #{var.hasGetter} Setter: #{var.hasSetter}) #{var.printCollectedData()}"
+      str = "#{str}\n  instance variable (Getter: #{var.hasGetter?} Setter: #{var.hasSetter?}) #{var.printCollectedData()}"
     end
     @instanceMethods.each do |methodName, method|
       str = "#{str}\n#{method.printCollectedData(2)}"

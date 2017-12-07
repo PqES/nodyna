@@ -39,4 +39,17 @@ class VarAssignmentProcess < BasicProcess
       value.addListener(variable)
     end
   end
+
+  def process_cvasgn(exp)
+    _, varName, valueToAssign = exp
+    variable = @clazz.getStaticVariableByName(varName)
+    if(variable.nil?)
+      variable = Variable.new(@relatedFile, exp, exp.line, varName)
+      @clazz.addStaticVariable(variable)
+    end
+    value = UtilProcess.getValue(valueToAssign, @relatedFile, @clazz, @method)
+    if(!value.nil?)
+      value.addListener(variable)
+    end
+  end
 end

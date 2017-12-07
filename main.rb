@@ -9,7 +9,7 @@ puts ast.to_s
 ClassProcess.new.initProcess(ast, target)
 Inference.infer()
 Recommendation.instance.recommend()
-Recommendation.instance.printResults()
+#Recommendation.instance.printResults()
 puts "Classes Descobertas: "
 DiscoveredClasses.instance.classes.each do |className, clazz|
   puts clazz.printCollectedData()

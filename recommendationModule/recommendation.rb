@@ -2,12 +2,20 @@ require "singleton"
 require_relative "send_module"
 require_relative "const_set_module"
 require_relative "const_get_module"
+require_relative "instance_variable_get_module"
+require_relative "instance_variable_set_module"
+require_relative "class_variable_get_module"
+require_relative "class_variable_set_module"
 
 class Recommendation
   include Singleton
   include SendModule
   include ConstSetModule
   include ConstGetModule
+  include InstanceVariableGetModule
+  include InstanceVariableSetModule
+  include ClassVariableGetModule
+  include ClassVariableSetModule
 
   def initValues()
     @totalDynamicStatements = {}
@@ -60,13 +68,17 @@ class Recommendation
   def recommendFunction(linkedFunction, root, function)
     functionToCall = nil
     if(function.methodName == :class_variable_get)
+      functionToCall = :recommendCVG
     elsif(function.methodName == :class_variable_set)
+      functionToCall = :recommendCVS
     elsif(function.methodName == :const_set)
       functionToCall = :recommendConstSet
     elsif(function.methodName == :const_get)
       functionToCall = :recommendConstGet
     elsif(function.methodName == :instance_variable_get)
+      functionToCall = :recommendIVG
     elsif(function.methodName == :instance_variable_set)
+      functionToCall = :recommendIVS
     elsif(function.methodName == :send)
       functionToCall = :recommendSend
     end

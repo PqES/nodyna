@@ -56,6 +56,10 @@ class MethodProcess < BasicProcess
     VarAssignmentProcess.new.initProcess(exp, @relatedFile, @clazz, @method)
   end
 
+  def process_cvasgn(exp)
+    VarAssignmentProcess.new.initProcess(exp, @relatedFile, @clazz, @method)
+  end
+
   def process_call(exp)
     linkedFunction = LinkedFunctionProcess.new.initProcess(exp, @relatedFile, @clazz, @method)
     @method.addStatement(linkedFunction)
@@ -75,7 +79,17 @@ class MethodProcess < BasicProcess
     process(body)
   end
 
+  def process_ivar(exp)
+    _, varName = exp
+    variable = Variable.new(@relatedFile, exp.line, exp, varName)
+    @clazz.addInstanceVariable(variable)
+  end
 
+  def process_cvar(exp)
+    _, varName = exp
+    variable = Variable.new(@relatedFile, exp.line, exp, varName)
+    @clazz.addStaticVariable(variable)
+  end
 
 =begin
   def addReturn(returnExp)

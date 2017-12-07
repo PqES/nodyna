@@ -19,11 +19,11 @@ class ConstCall < BasicData
     return @fullName
   end
 
-  def isDynamic?()
+  def isDynamicValue?()
     return @isConstant
   end
 
-  def isStatic?()
+  def isStaticValue?()
     return @isSelfInstance
   end
 

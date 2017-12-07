@@ -3,8 +3,10 @@ require_relative "dynamic_values"
 class Variable < BasicData
   include Inferable
   include DynamicValues
+
   attr_reader :name
-  attr_accessor :hasGetter, :hasSetter
+  attr_writer :hasGetter, :hasSetter
+
   def initialize(rbfile, line, exp, name)
     super(rbfile, line, exp)
     initInferableModule()
@@ -15,6 +17,14 @@ class Variable < BasicData
 
   def onReceiveNotification(obj)
     addAllInfer(obj.infers)
+  end
+
+  def hasGetter?
+    return @hasGetter
+  end
+
+  def hasSetter?
+    return @hasSetter
   end
 
   def to_s

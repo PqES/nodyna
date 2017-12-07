@@ -48,10 +48,10 @@ class FunctionCalled < BasicData
         clazz = DiscoveredClasses.instance.getClassByFullName(baseInfer.type)
       end
       if(!clazz.nil?)
-        if(baseInfer.obj.class != ConstCall)
-          method = clazz.getInstanceMethodByName(@methodName)
-        else
+        if(baseInfer.isSelfInstance?)
           method = clazz.getStaticMethodByName(@methodName)
+        else
+          method = clazz.getInstanceMethodByName(@methodName)
         end
         if(!method.nil?)
           method.addListener(self)

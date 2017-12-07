@@ -83,14 +83,14 @@ class ClassProcess < BasicProcess
     end
     params.each do |param|
       if(param[0] == :lit || param[0] == :str)
-        varName = param[1].to_sym()
+        varName = "@#{param[1]}".to_sym()
         variable = @currentClass.getInstanceVariableByName(varName)
         if(variable.nil?)
           variable = Variable.new(@relatedFile, param.line, param, varName)
-          variable.hasGetter = hasGetter
-          variable.hasSetter = hasSetter
           @currentClass.addInstanceVariable(variable)
         end
+        variable.hasGetter = variable.hasGetter? || hasGetter
+        variable.hasSetter = variable.hasSetter? || hasSetter
       end
     end
   end
@@ -132,4 +132,15 @@ class ClassProcess < BasicProcess
     end
   end
 
+  def process_ivar(exp)
+    _, varName = exp
+    variable = Variable.new(@relatedFile, exp.line, exp, varName)
+    @currentClass.addInstanceVariable(variable)
+  end
+
+  def process_cvar(exp)
+    _, varName = exp
+    variable = Variable.new(@relatedFile, exp.line, exp, varName)
+    @currentClass.addStaticVariable(variable)
+  end
 end
