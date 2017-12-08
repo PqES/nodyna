@@ -18,6 +18,7 @@ class Recommendation
   include ClassVariableSetModule
 
   def initValues()
+    @recommendations = ""
     @totalDynamicStatements = {}
     @safeRecommendations = {}
     @unsafeRecommendations = {}
@@ -29,8 +30,11 @@ class Recommendation
     end
   end
 
-  def printResults()
-    puts "Resultado Geral:"
+  def printRecommendations()
+    puts @recommendations
+  end
+
+  def printGeneralResults()
     [:class_variable_get, :class_variable_set, :const_set, :const_get,
      :instance_variable_set, :instance_variable_get, :send].each do |dynamicStatement|
       puts "#{dynamicStatement}: #{@totalDynamicStatements[dynamicStatement]}; Safes: #{@safeRecommendations[dynamicStatement]}; Unsafes: #{@unsafeRecommendations[dynamicStatement]}"
@@ -38,7 +42,6 @@ class Recommendation
   end
 
   def recommend()
-
     initValues()
     DiscoveredClasses.instance.classes.each do |className, clazz|
       clazz.instanceMethods.each do |methodName, method|
@@ -83,21 +86,21 @@ class Recommendation
       functionToCall = :recommendSend
     end
     if(!functionToCall.nil?)
-      puts "#{function.methodName} indetificado no arquivo #{function.rbfile} linha #{function.line}"
+      @recommendations << "#{function.methodName} indetificado no arquivo #{function.rbfile} linha #{function.line}\n"
       @totalDynamicStatements[function.methodName] += 1
       success, safeRecommendation, msg = self.send(functionToCall, linkedFunction, root, function)
       if(success)
         if(safeRecommendation)
           @safeRecommendations[function.methodName] += 1
-          puts "Sugestao [safe]:\n#{msg}"
+          @recommendations << "Sugestao [safe]: \n#{msg}\n"
         else
           @unsafeRecommendations[function.methodName] += 1
-          puts "Sugestao [unsafe]:\n#{msg}"
+          @recommendations << "Sugestao [unsafe]: \n#{msg}\n"
         end
       else
-        puts "#{msg}"
+        @recommendations << "#{msg}\n"
       end
-      puts "#{"=" * 80}"
+      @recommendations << "#{"=" * 80}\n"
     end
   end
 

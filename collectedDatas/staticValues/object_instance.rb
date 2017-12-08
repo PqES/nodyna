@@ -10,4 +10,8 @@ class ObjectInstance
     @value = value
     addInfer(createInfer(value, :instance))
   end
+
+  def to_s
+    return ""
+  end
 end

@@ -39,7 +39,7 @@ module ClassVariableGetModule
   #class_variable_get(:@@a)
   def tryFirstSuggestionToCVG(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    if(firstParameter.class == LiteralDef && (root.isStaticValue? && (root.class == SelfInstance || root.class == ConstCall)))
+    if(firstParameter.class == LiteralDef && root.class == SelfInstance)
       return true, true, "Chame a variavel diretamente: #{firstParameter.value}"
     end
     return nil,nil,nil
@@ -49,7 +49,7 @@ module ClassVariableGetModule
   #class_variable_get(var)
   def trySecondSuggestionToCVG(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    if(firstParameter.isDynamicValue? && (root.isStaticValue? && (root.class == SelfInstance || root.class == ConstCall)))
+    if(firstParameter.isDynamicValue? && root.class == SelfInstance)
       if(firstParameter.infers.size > 0)
         infers = firstParameter.infers.to_a
         hasGetter = hasStaticGetter?(root.infers, infers[0].value)
@@ -72,7 +72,7 @@ module ClassVariableGetModule
   #obj.class_variable_get(:@a)
   def tryThirdSuggestionToCVG(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    if(firstParameter.class == LiteralDef && root.isDynamicValue?)
+    if(firstParameter.class == LiteralDef  && root.class != ObjectInstance)
       hasGetter = hasStaticGetter?(root.infers, firstParameter.value)
       safeRecommendation = !hasGetter.nil?
       ifSuggestion = "#{linkedFunction.to_s(function)}.#{firstParameter.value.to_s.sub("@@","")}() #{printMarkToCVG(hasGetter)}"
@@ -84,7 +84,7 @@ module ClassVariableGetModule
   #obj.class_variable_get(var)
   def tryForthSuggestionToCVG(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    if(firstParameter.isDynamicValue? && root.isDynamicValue?)
+    if(firstParameter.isDynamicValue?  && root.class != ObjectInstance)
       if(firstParameter.infers.size > 0)
         infers = firstParameter.infers.to_a
         hasGetter = hasStaticGetter?(root.infers, infers[0].value)
@@ -107,9 +107,6 @@ module ClassVariableGetModule
   def recommendCVG(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
     if(!root.nil? && !firstParameter.nil?)
-      if(root.infers.size == 0)
-        return false, false, "Nao foi possivel inferir as classes que invocam class_variable_get"
-      end
       [:tryFirstSuggestionToCVG,
        :trySecondSuggestionToCVG,
        :tryThirdSuggestionToCVG,

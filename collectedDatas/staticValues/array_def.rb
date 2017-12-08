@@ -16,29 +16,37 @@ class ArrayDef < BasicData
     end
   end
 
+  def addElement(e)
+    @elements << e
+    e.addListener(self)
+  end
+
   #abstract
   def onReceiveNotification(obj)
-    newInfers = @elementInfers.addAllInfer(obj.inferenceSet.infers)
+    newInfers = @elementInfers.addAllInfer(obj.infers)
     if(newInfers)
       notifyNewInfers()
     end
   end
 
-  #abstract
-  def isObjectInsance?()
-    return true
-  end
-
-  #abstract
-  def isSelfInstance?()
-    return false
-  end
-
-
   def infersOnEach
     return @elementInfers.infers
   end
 
+  def to_s
+    str = "["
+    if(@elements.size > 0)
+      @elements.each do |element|
+        if(!element.nil?)
+            str += "#{element.to_s},"
+        else
+          str += "?,"
+        end
+      end
+      str.chop!
+    end
+    str += "]"
+  end
   def printCollectedData()
     return "#{printInferData}"
   end

@@ -63,10 +63,10 @@ class MethodDef < BasicData
     end
     str = "#{str}) #{printInferData}"
     @variables.each do |varName, variable|
-      str = "#{str}\n#{" " * spaces}  var #{variable.printCollectedData()}"
+      str = "#{str}\n#{" " * spaces}    var #{variable.printCollectedData()}"
     end
     @statements.each do |statement|
-      str = "#{str}\n#{" " * spaces}  statement #{statement.printCollectedData()}"
+      str = "#{str}\n#{" " * spaces}    statement #{statement.printCollectedData()}"
     end
     return str
   end

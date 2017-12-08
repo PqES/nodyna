@@ -54,7 +54,7 @@ module ConstGetModule
         for i in 1..infers.size-1
           privateConstant = isPrivateConstant = isPrivateConstant(root.infers, infers[i].value)
           safeRecommendation = safeRecommendation && !privateConstant.nil?
-          ifSuggestion = " #{ifSuggestion}\nelsif(#{firstParameter.to_s} == #{infers[i].value}) \n  #{root.to_s}::#{infers[i].value} #{printMark(privateConstant)}"
+          ifSuggestion = " #{ifSuggestion}\nelsif(#{firstParameter.to_s} == #{infers[i].value}) \n  #{root.to_s}::#{infers[i].value} #{printConstGetMark(privateConstant)}"
         end
         ifSuggestion = "#{ifSuggestion}\nelse\n  #{function.to_s}"
         return true, safeRecommendation, ifSuggestion

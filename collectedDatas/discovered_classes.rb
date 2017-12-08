@@ -6,6 +6,10 @@ class DiscoveredClasses
     @classes =  {}
   end
 
+  def clear()
+    @classes.clear()
+  end
+
   def getClassByFullName(name)
     name = "#{name}".to_sym()
     if(@classes.has_key?(name))
@@ -16,6 +20,10 @@ class DiscoveredClasses
 
   def addClass(clazz)
     @classes[clazz.fullName] = clazz
+  end
+
+  def getAllClasses()
+    return @classes
   end
 
 end

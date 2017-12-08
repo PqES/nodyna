@@ -41,7 +41,7 @@ module InstanceVariableSetModule
     firstParameter = function.getParameter(0)
     secondParameter = function.getParameter(1)
     if(firstParameter.class == LiteralDef && root.class == ObjectInstance)
-      return true, true, "Realize a atribuiçao diretamente: #{firstParameter.value} = #{secondParameter.to_s}"
+      return true, true, "Realize a atribuiçao diretamente: #{firstParameter.value} = ..."
     end
     return nil,nil,nil
   end
@@ -56,11 +56,11 @@ module InstanceVariableSetModule
         infers = firstParameter.infers.to_a
         hasSetter = hasSetter?(root.infers, infers[0].value)
         safeRecommendation = !hasSetter.nil?
-        ifSuggestion = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{infers[0].value} = #{secondParameter.to_s} #{printMarkToIVS(hasSetter)}"
+        ifSuggestion = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{infers[0].value} = ... #{printMarkToIVS(hasSetter)}"
         for i in 1..infers.size - 1
           hasSetter = hasSetter?(root.infers, infers[i].value)
           safeRecommendation = safeRecommendation && !hasSetter.nil?
-          ifSuggestion += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{infers[i].value} #{secondParameter.to_s} #{printMarkToIVS(hasSetter)}"
+          ifSuggestion += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{infers[i].value} ... #{printMarkToIVS(hasSetter)}"
         end
         ifSuggestion += "\nelse\n  #{linkedFunction.to_s}\nend"
         return true, safeRecommendation, ifSuggestion
@@ -78,7 +78,7 @@ module InstanceVariableSetModule
     if(firstParameter.class == LiteralDef && root.isDynamicValue?)
       hasSetter = hasSetter?(root.infers, firstParameter.value)
       safeRecommendation = !hasSetter.nil?
-      msg = "#{linkedFunction.to_s(function)}.#{firstParameter.value.to_s.sub("@","")} = #{secondParameter.to_s} #{printMarkToIVS(hasSetter)}"
+      msg = "#{linkedFunction.to_s(function)}.#{firstParameter.value.to_s.sub("@","")} = ... #{printMarkToIVS(hasSetter)}"
       return true, safeRecommendation, msg
     end
     return nil, nil, nil
@@ -93,11 +93,11 @@ module InstanceVariableSetModule
         infers = firstParameter.infers.to_a
         hasSetter = hasSetter?(root.infers, infers[0].value)
         safeRecommendation = !hasSetter.nil?
-        ifValues = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{linkedFunction.to_s(function)}.#{infers[0].value.to_s.sub("@","")} = #{secondParameter.to_s} #{printMarkToIVS(hasSetter)}"
+        ifValues = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{linkedFunction.to_s(function)}.#{infers[0].value.to_s.sub("@","")} = ... #{printMarkToIVS(hasSetter)}"
         for i in 1..infers.size - 1
           hasSetter = hasSetter?(root.infers, infers[i].value)
           safeRecommendation = safeRecommendation && !hasSetter.nil?
-          ifValues += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{linkedFunction.to_s(function)}.#{infers[i].value.to_s.sub("@","")} = #{secondParameter.to_s} #{printMarkToIVS(hasSetter)}"
+          ifValues += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{linkedFunction.to_s(function)}.#{infers[i].value.to_s.sub("@","")} = ... #{printMarkToIVS(hasSetter)}"
         end
         ifValues += "\nelse\n  #{linkedFunction.to_s}\nend"
         return true, safeRecommendation, ifValues
@@ -110,11 +110,7 @@ module InstanceVariableSetModule
 
   def recommendIVS(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    secondParameter = function.getParameter(1)
-    if(!root.nil? && !firstParameter.nil? && !secondParameter.nil?)
-      if(root.infers.size == 0)
-        return false, false, "Nao foi possivel inferir as classes que invocam instance_variable_set"
-      end
+    if(!root.nil? && !firstParameter.nil?)
       [:tryFirstSuggestionToIVS,
        :trySecondSuggestionToIVS,
        :tryThirdSuggestionToIVS,

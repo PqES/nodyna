@@ -25,7 +25,7 @@ module ClassVariableSetModule
 
   def printMarkToCVS(hasSetter)
     if(!hasSetter.nil? && !hasSetter)
-      return "#crie um get para a variavel"
+      return "#crie um set para a variavel"
     elsif(hasSetter.nil?)
       return "#nao foi possivel verificar a visibilidade da variavel"
     end
@@ -37,27 +37,27 @@ module ClassVariableSetModule
   def tryFirstSuggestionToCVS(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
     secondParameter = function.getParameter(1)
-    if(firstParameter.class == LiteralDef && (root.isStaticValue? && (root.class == SelfInstance || root.class == ConstCall)))
-      return true, true, "Faca a atribuiçao diretamente: #{firstParameter.value} = #{secondParameter.to_s}"
+    if(firstParameter.class == LiteralDef && (root.class == SelfInstance))
+      return true, true, "Faca a atribuiçao diretamente: #{firstParameter.value} = ..."
     end
     return nil,nil,nil
   end
 
 
-  #class_variable_get(var)
+  #class_variable_set(var)
   def trySecondSuggestionToCVS(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
     secondParameter = function.getParameter(1)
-    if(firstParameter.isDynamicValue? && (root.isStaticValue? && (root.class == SelfInstance || root.class == ConstCall)))
+    if(firstParameter.isDynamicValue? && root.class == SelfInstance)
       if(firstParameter.infers.size > 0)
         infers = firstParameter.infers.to_a
         hasSetter = hasStaticSetter?(root.infers, infers[0].value)
         safeRecommendation = !hasSetter.nil?
-        ifSuggestion = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{infers[0].value} = #{secondParameter.to_s} #{printMarkToCVS(hasSetter)}"
+        ifSuggestion = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{infers[0].value} = ... #{printMarkToCVS(hasSetter)}"
         for i in 1..infers.size - 1
           hasSetter = hasStaticSetter?(root.infers, infers[i].value)
           safeRecommendation = safeRecommendation && !hasSetter.nil?
-          ifSuggestion += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{infers[i].value} = #{secondParameter.to_s} #{printMarkToCVS(hasSetter)}"
+          ifSuggestion += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{infers[i].value} = ... #{printMarkToCVS(hasSetter)}"
         end
         ifSuggestion += "\nelse\n  #{linkedFunction.to_s}\nend"
         return true, safeRecommendation, ifSuggestion
@@ -72,10 +72,10 @@ module ClassVariableSetModule
   def tryThirdSuggestionToCVS(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
     secondParameter = function.getParameter(1)
-    if(firstParameter.class == LiteralDef && root.isDynamicValue?)
+    if(firstParameter.class == LiteralDef  && root.class != ObjectInstance)
       hasSetter = hasStaticSetter?(root.infers, firstParameter.value)
       safeRecommendation = !hasSetter.nil?
-      ifSuggestion = "#{linkedFunction.to_s(function)}.#{firstParameter.value.to_s.sub("@@","")} = #{secondParameter.to_s} #{printMarkToCVS(hasSetter)}"
+      ifSuggestion = "#{linkedFunction.to_s(function)}.#{firstParameter.value.to_s.sub("@@","")} = ... #{printMarkToCVS(hasSetter)}"
       return true, safeRecommendation, ifSuggestion
     end
     return nil, nil, nil
@@ -85,16 +85,16 @@ module ClassVariableSetModule
   def tryForthSuggestionToCVS(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
     secondParameter = function.getParameter(1)
-    if(firstParameter.isDynamicValue? && root.isDynamicValue?)
+    if(firstParameter.isDynamicValue? && root.class != ObjectInstance)
       if(firstParameter.infers.size > 0)
         infers = firstParameter.infers.to_a
         hasSetter = hasStaticSetter?(root.infers, infers[0].value)
         safeRecommendation = !hasSetter.nil?
-        ifValues = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{linkedFunction.to_s(function)}.#{infers[0].value.to_s.sub("@@","")} = #{secondParameter.to_s} #{printMarkToCVG(hasSetter)}"
+        ifValues = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{linkedFunction.to_s(function)}.#{infers[0].value.to_s.sub("@@","")} = ... #{printMarkToCVS(hasSetter)}"
         for i in 1..infers.size - 1
           hasSetter = hasStaticSetter?(root.infers, infers[i].value)
           safeRecommendation = safeRecommendation && !hasSetter.nil?
-          ifValues += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{linkedFunction.to_s(function)}.#{infers[i].value.to_s.sub("@@","")} = #{secondParameter.to_s} #{printMarkToCVG(hasSetter)}"
+          ifValues += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{linkedFunction.to_s(function)}.#{infers[i].value.to_s.sub("@@","")} = ... #{printMarkToCVS(hasSetter)}"
         end
         ifValues += "\nelse\n  #{linkedFunction.to_s}\nend"
         return true, safeRecommendation, ifValues
@@ -107,11 +107,7 @@ module ClassVariableSetModule
 
   def recommendCVS(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    secondParameter = function.getParameter(1)
-    if(!root.nil? && !firstParameter.nil? && !secondParameter.nil?)
-      if(root.infers.size == 0)
-        return false, false, "Nao foi possivel inferir as classes que invocam class_variable_set"
-      end
+    if(!root.nil? && !firstParameter.nil?)
       [:tryFirstSuggestionToCVS,
        :trySecondSuggestionToCVS,
        :tryThirdSuggestionToCVS,

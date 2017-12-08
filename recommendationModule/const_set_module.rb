@@ -8,7 +8,7 @@ module ConstSetModule
   def tryFirstSuggestionToConstSet(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
     secondParameter = function.getParameter(1)
-    if(root.class == SelfInstance || (root.class == ConstCall && root.isStatic?))
+    if(root.class == SelfInstance || (root.class == ConstCall && root.isStaticValue?))
       if(firstParameter.class == LiteralDef && secondParameter.isStaticValue?)
         msg = "Crie a constante #{firstParameter.value} com valor #{secondParameter.to_s} na classe #{root.value} diretamente"
         return true, false, msg
@@ -19,7 +19,7 @@ module ConstSetModule
 
   #Clazz.const_set(x, :X)
   def trySecondSuggestionToConstSet(linkedFunction, root, function)
-    if((root.class == SelfInstance || (root.class == ConstCall && root.isStatic?)))
+    if((root.class == SelfInstance || (root.class == ConstCall && root.isStaticValue?)))
       firstParameter = function.getParameter(0)
       if(firstParameter.isDynamicValue?)
         if(firstParameter.infers.size > 0)
@@ -49,6 +49,7 @@ module ConstSetModule
       root.infers.each do |infer|
         strClasses = "#{strClasses}#{infer.value},"
       end
+      strClasses.chop!
       strIfCase = "if (![#{strClasses}].include?(#{linkedFunction.to_s(function)})) #{linkedFunction.to_s}"
       msg = "Crie a constante #{firstParameter.value} na(s) classe(s) #{strClasses} com valor #{secondParameter.to_s}. Adicione tambem a condiçao:\n#{strIfCase}"
       return true, false, msg

@@ -33,7 +33,7 @@ class LinkedFunctionProcess < BasicProcess
   def processParams(params)
     formalParameters = []
     params.each do |param|
-      parameterValue = UtilProcess.getValue(param, @relatedFile, @clazz, @method)
+      parameterValue = UtilProcess.processValue(param, @relatedFile, @clazz, @method)
       formalParameters << parameterValue
     end
     return formalParameters
@@ -44,9 +44,9 @@ class LinkedFunctionProcess < BasicProcess
     func = FunctionCalled.new(@relatedFile, exp.line, exp, methodCalled, processParams(params))
     @functions.insert(0, func)
     if(caller.class == Sexp)
-      if([:lit, :str, :array, :lvar, :ivar, :const, :colon2].include?(caller[0]))
-        @root = UtilProcess.getValue(caller, @relatedFile, @clazz, @method)
-      elsif(caller[0] == :call)
+      if(caller[0] != :call)
+        @root = UtilProcess.processValue(caller, @relatedFile, @clazz, @method)
+      else
         process(caller)
       end
     end

@@ -4,6 +4,7 @@ class LinkedFunctions < BasicData
   include Inferable
   include DynamicValues
   attr_reader :root, :functions
+
   def initialize(rbfile, line, exp, root, functions)
     super(rbfile, line, exp)
     initInferableModule()
@@ -22,17 +23,21 @@ class LinkedFunctions < BasicData
   end
 
   def infer()
-    infers = @root.infers()
-    @functions.each do |func|
-      func.infer(infers)
-      infers = func.infers()
+    if(!@root.nil?)
+      infers = @root.infers()
+      @functions.each do |func|
+        func.infer(infers)
+        infers = func.infers()
+      end
+      addAllInfer(infers)
     end
-    addAllInfer(infers)
   end
 
 
   def to_s(functionToStop = nil)
-    if(!@root.nil? && @root.class != ObjectInstance && @root.to_s != "")
+    if(@root.nil?)
+      str = "?."
+    elsif(@root.to_s != "")
       str = "#{@root.to_s}."
     else
       str = ""
@@ -56,7 +61,7 @@ class LinkedFunctions < BasicData
       end
       strInfers = "#{@root.printInferData()}"
     else
-      str = "#{" " * spaces}"
+      str = "#{" " * spaces}?."
       strInfers = ""
     end
     @functions.each do |func|
@@ -67,4 +72,5 @@ class LinkedFunctions < BasicData
     strInfers = "#{strInfers}"
     return "#{str} #{strInfers}"
   end
+
 end

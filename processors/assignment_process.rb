@@ -25,7 +25,7 @@ class VarAssignmentProcess < BasicProcess
       variable = Variable.new(@relatedFile, exp, exp.line, varName) if variable.nil?
       @clazz.addLocalVariable(variable)
     end
-    value = UtilProcess.getValue(valueToAssign, @relatedFile, @clazz, @method)
+    value = UtilProcess.processValue(valueToAssign, @relatedFile, @clazz, @method)
     if(!value.nil?)
       value.addListener(variable)
     end
@@ -38,7 +38,7 @@ class VarAssignmentProcess < BasicProcess
       variable = Variable.new(@relatedFile, exp, exp.line, varName)
       @clazz.addInstanceVariable(variable)
     end
-    value = UtilProcess.getValue(valueToAssign, @relatedFile, @clazz, @method)
+    value = UtilProcess.processValue(valueToAssign, @relatedFile, @clazz, @method)
     if(!value.nil?)
       value.addListener(variable)
     end
@@ -51,7 +51,7 @@ class VarAssignmentProcess < BasicProcess
       variable = Variable.new(@relatedFile, exp, exp.line, varName)
       @clazz.addStaticVariable(variable)
     end
-    value = UtilProcess.getValue(valueToAssign, @relatedFile, @clazz, @method)
+    value = UtilProcess.processValue(valueToAssign, @relatedFile, @clazz, @method)
     if(!value.nil?)
       value.addListener(variable)
     end

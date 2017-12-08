@@ -30,4 +30,5 @@ class ConstantDef < BasicData
   def printCollectedData()
     return "#{@name} #{printInferData}"
   end
+
 end

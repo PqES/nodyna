@@ -35,8 +35,14 @@ class FunctionCalled < BasicData
     elsif(@methodName == :class && baseInfer.isObjectInstance?)
       selfType = SelfInstance.new(baseInfer.type)
       addAllInfer(selfType.infers)
-    elsif((@methodName == :each || @methodName == :[]) && baseInfer.isFromArray?)
+    elsif([:each, :map, :[], :any?].include?(@methodName) && baseInfer.isFromArray?)
       addAllInfer(baseInfer.obj.infersOnEach)
+    elsif(@methodName == :<< && baseInfer.isFromArray?)
+      firstParameter = getParameter(0)
+      baseInfer.obj.addElement(firstParameter) if !firstParameter.nil?
+    elsif((@methodName == :downcase || @methodName == :to_sym) && baseInfer.value.class == String)
+      newValue = baseInfer.value.send(@methodName)
+      addInfer(createInfer(newValue.class, newValue))
     end
   end
 
@@ -57,6 +63,7 @@ class FunctionCalled < BasicData
           method.addListener(self)
           parameterIndex = 0
           @parameters.each do |parameter|
+            next if parameter.nil?
             formalParameter = method.getFormalParameter(parameterIndex)
             if(!formalParameter.nil?)
               parameter.addListener(formalParameter)
@@ -76,7 +83,11 @@ class FunctionCalled < BasicData
   def to_s
     str = "#{@methodName}("
     @parameters.each do |param|
-      str = "#{str}#{param.to_s},"
+      if(!param.nil?)
+        str = "#{str}#{param.to_s},"
+      else
+        str = "#{str}?,"
+      end
     end
     if(@parameters.size > 0)
       str.chop!
@@ -101,9 +112,9 @@ class FunctionCalled < BasicData
   def printCollectedData()
     str = "#{@methodName}("
     @parameters.each do |param|
-      if(!param.nil?)
+      if(!param.nil? && param.class != ObjectInstance && param.class != SelfInstance)
         str = "#{str}#{param.printCollectedData()},"
-      else
+      elsif(param.nil?)
         str = "#{str}?,"
       end
     end

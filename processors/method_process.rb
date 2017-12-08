@@ -15,7 +15,26 @@ class MethodProcess < BasicProcess
   end
 
   def processMethod(exp, methodName, args, scope, instanceMethod)
-    @method = MethodDef.new(@relatedFile, exp.line, exp, methodName, instanceMethod)
+    if(instanceMethod)
+      @method = @clazz.getInstanceMethodByName(methodName)
+      if(@method.nil?)
+        @method = MethodDef.new(@relatedFile, exp.line, exp, methodName, instanceMethod)
+        @clazz.addInstanceMethod(@method)
+      end
+    else
+      @method = @clazz.getStaticMethodByName(methodName)
+      if(@method.nil?)
+        @method = MethodDef.new(@relatedFile, exp.line, exp, methodName, instanceMethod)
+        @clazz.addStaticMethod(@method)
+      end
+    end
+    #implicitReturns = UtilProcess.getImplicitReturn(scope.last)
+    #implicitReturns.each do |implicitReturn|
+      #value = UtilProcess.processValue(implicitReturn, @relatedFile, @clazz, @method)
+      #if(!value.nil?)
+      #  value.addListener(@method)
+      #end
+    #end
     processArgs(args)
     scope.map {|subTree| process(subTree) if subTree.class == Sexp}
   end
@@ -36,28 +55,28 @@ class MethodProcess < BasicProcess
   end
 
   def process_defs(exp)
-    _,_,methodName,args,*scope = exp
+    _,_,methodName,args, *scope = exp
     processMethod(exp, methodName, args, scope, false)
   end
 
   def process_return(exp)
     _, returnExp = exp
-    returnValue = UtilProcess.getValue(returnExp, @relatedFile, @clazz, @method)
+    returnValue = UtilProcess.processValue(returnExp, @relatedFile, @clazz, @method)
     if(!returnValue.nil?)
       returnValue.addListener(@method)
     end
   end
 
   def process_lasgn(exp)
-    VarAssignmentProcess.new.initProcess(exp, @relatedFile, @clazz, @method)
+    UtilProcess.processAssignment(exp, @relatedFile, @clazz, @method)
   end
 
   def process_iasgn(exp)
-    VarAssignmentProcess.new.initProcess(exp, @relatedFile, @clazz, @method)
+    UtilProcess.processAssignment(exp, @relatedFile, @clazz, @method)
   end
 
   def process_cvasgn(exp)
-    VarAssignmentProcess.new.initProcess(exp, @relatedFile, @clazz, @method)
+    UtilProcess.processAssignment(exp, @relatedFile, @clazz, @method)
   end
 
   def process_call(exp)
@@ -75,6 +94,8 @@ class MethodProcess < BasicProcess
         linkedFunction = LinkedFunctionProcess.new.initProcess(caller, @relatedFile, @clazz, @method)
         linkedFunction.addListener(var)
       end
+    else
+      process(caller)
     end
     process(body)
   end

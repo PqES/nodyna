@@ -10,20 +10,26 @@ class ClassProcess < BasicProcess
     @visibility = :public
     @relatedFile = relatedFile
     @classStack = []
-    @currentClass = nil
+    @currentClass = DiscoveredClasses.instance.getClassByFullName("#DefaultClass".to_sym)
     process(ast)
   end
 
   def process_class(exp)
     _, className, *args = exp
+    className = UtilProcess.getNamesFromConst(className).join("::")
     if(@classStack.size > 0)
       fullName = "#{@classStack.last.fullName}::#{className}"
-      clazz = ClassDef.new(@relatedFile, exp.line, exp, className, fullName)
-      @classStack.last.addInnerClass(clazz)
     else
-      clazz = ClassDef.new(@relatedFile, exp.line, exp, className, className)
+      fullName = className
     end
-    DiscoveredClasses.instance.addClass(clazz)
+    clazz = DiscoveredClasses.instance.getClassByFullName(fullName)
+    if(clazz.nil?)
+      clazz = ClassDef.new(@relatedFile, exp.line, exp, className, fullName)
+      DiscoveredClasses.instance.addClass(clazz)
+    end
+    if(@classStack.size > 0 )
+      @classStack.last.addInnerClass(clazz)
+    end
     @currentClass = clazz
     @classStack.push(clazz)
     args.map {|subTree| process(subTree) if subTree.class == Sexp}
@@ -43,11 +49,6 @@ class ClassProcess < BasicProcess
     if(!@currentClass.nil?)
       method = MethodProcess.new.initProcess(exp, @relatedFile, @currentClass)
       method.visibility = @visibility
-      if(method.instanceMethod)
-        @currentClass.addInstanceMethod(method)
-      else
-        @currentClass.addStaticMethod(method)
-      end
     end
   end
 
@@ -128,7 +129,7 @@ class ClassProcess < BasicProcess
     _, constName, expValue = exp
     if(constName.class == Symbol)
       constant = ConstantDef.new(@relatedFile, exp.line, exp, constName)
-      value = UtilProcess.getValue(expValue, @relatedFile, @currentClass, nil)
+      value = UtilProcess.processValue(expValue, @relatedFile, @currentClass, nil)
       if(!value.nil?)
         value.addListener(constant)
       end
@@ -136,16 +137,26 @@ class ClassProcess < BasicProcess
     end
   end
 
+  def process_cvdecl(exp)
+    _, varName, expValue = exp
+    variable = Variable.new(@relatedFile, exp.line, exp, varName)
+    value = UtilProcess.processValue(expValue, @relatedFile, @currentClass, nil)
+    if(!value.nil?)
+      value.addListener(variable)
+    end
+    @currentClass.addStaticVariable(variable)
+  end
+
   def process_lasgn(exp)
-    VarAssignmentProcess.new.initProcess(exp, @relatedFile, @currentClass, nil)
+    UtilProcess.processAssignment(exp, @relatedFile, @currentClass, nil)
   end
 
   def process_iasgn(exp)
-    VarAssignmentProcess.new.initProcess(exp, @relatedFile, @currentClass, nil)
+    UtilProcess.processAssignment(exp, @relatedFile, @currentClass, nil)
   end
 
   def process_cvasgn(exp)
-    VarAssignmentProcess.new.initProcess(exp, @relatedFile, @currentClass, nil)
+    UtilProcess.processAssignment(exp, @relatedFile, @currentClass, nil)
   end
 
   def process_ivar(exp)
@@ -158,5 +169,21 @@ class ClassProcess < BasicProcess
     _, varName = exp
     variable = Variable.new(@relatedFile, exp.line, exp, varName)
     @currentClass.addStaticVariable(variable)
+  end
+
+  def process_iter(exp)
+    _, caller, argExp, body = exp
+    _, *args = argExp
+    if(args.size == 1)
+      var = Variable.new(@relatedFile, argExp.line, argExp, args[0])
+      @currentClass.addLocalVariable(var)
+      if(caller[0] == :call)
+        linkedFunction = LinkedFunctionProcess.new.initProcess(caller, @relatedFile, @currentClass, @method)
+        linkedFunction.addListener(var)
+      end
+    else
+      process(caller)
+    end
+    process(body)
   end
 end

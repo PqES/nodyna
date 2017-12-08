@@ -107,9 +107,6 @@ module InstanceVariableGetModule
   def recommendIVG(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
     if(!root.nil? && !firstParameter.nil?)
-      if(root.infers.size == 0)
-        return false, false, "Nao foi possivel inferir as classes que invocam instance_variable_get"
-      end
       [:tryFirstSuggestionToIVG,
        :trySecondSuggestionToIVG,
        :tryThirdSuggestionToIVG,
