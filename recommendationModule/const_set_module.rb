@@ -4,55 +4,40 @@ require_relative "../collectedDatas/staticValues/literal_def"
 module ConstSetModule
 
 
-  #Clazz.const_set(:CONST, :X)
+
+  #const_set(:CONST, :X)
   def tryFirstSuggestionToConstSet(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    secondParameter = function.getParameter(1)
-    if(root.class == SelfInstance || (root.class == ConstCall && root.isStaticValue?))
-      if(firstParameter.class == LiteralDef && secondParameter.isStaticValue?)
-        msg = "Crie a constante #{firstParameter.value} com valor #{secondParameter.to_s} na classe #{root.value} diretamente"
-        return true, false, msg
-      end
+    if(root.class == SelfInstance && firstParameter.class == LiteralDef)
+      msg = "#{firstParameter.value} = ..."
+      return true, true, msg
     end
     return nil, nil, nil
   end
 
-  #Clazz.const_set(x, :X)
+  #const_set(x, :X)
   def trySecondSuggestionToConstSet(linkedFunction, root, function)
-    if((root.class == SelfInstance || (root.class == ConstCall && root.isStaticValue?)))
-      firstParameter = function.getParameter(0)
-      if(firstParameter.isDynamicValue?)
-        if(firstParameter.infers.size > 0)
-          secondParameter = function.getParameter(1)
-          strValues = ""
-          firstParameter.infers.each do |infer|
-            strValues = "#{strValues}#{infer.value},"
-          end
-          strValues.chop!
-          strIfCase = "if (![#{strValues}].include?(#{firstParameter.to_s})) #{linkedFunction.to_s}"
-          msg = "Crie a(s) constante(s) #{strValues} na classe #{root.value} com valor #{secondParameter.to_s}. Adicione tambem a condiçao:\n#{strIfCase}"
-          return true, false, msg
-        else
-          return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}"
-        end
+    firstParameter = function.getParameter(0)
+    if(root.class == SelfInstance && firstParameter.isDynamicValue?)
+      infers = firstParameter.infers.to_a
+      ifSuggestion = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{infers[0].value} = ..."
+      for i in 1 .. infers.size - 1
+        ifSuggestion += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{infers[i].value} = ..."
       end
+      ifSuggestion += "\nelse\n  #{linkedFunction.to_s}\nend"
+      return true, true, ifSuggestion
     end
     return nil, nil, nil
   end
 
-  #obj.class.const_set(:CONST, :X)
+  #obj.const_set(:CONST, :X)
   def tryThirdSuggestionToConstSet(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    if(root.isDynamicValue? && firstParameter.isStaticValue?)
-      secondParameter = function.getParameter(1)
-      strClasses = ""
-      root.infers.each do |infer|
-        strClasses = "#{strClasses}#{infer.value},"
-      end
-      strClasses.chop!
-      strIfCase = "if (![#{strClasses}].include?(#{linkedFunction.to_s(function)})) #{linkedFunction.to_s}"
-      msg = "Crie a constante #{firstParameter.value} na(s) classe(s) #{strClasses} com valor #{secondParameter.to_s}. Adicione tambem a condiçao:\n#{strIfCase}"
-      return true, false, msg
+    if(root.isDynamicValue? && firstParameter.class == LiteralDef)
+      privateConstant = isPrivateConstant?(root.infers, firstParameter.value)
+      safe = !privateConstant.nil?
+      suggestion = "#{linkedFunction.to_s(function)}::#{firstParameter.value} = ... #{printConstGetMark(privateConstant)}"
+      return true, safe, suggestion
     end
     return nil, nil, nil
   end
@@ -60,37 +45,27 @@ module ConstSetModule
   #obj.class.const_set(x)
   def tryForthSuggestionToConstSet(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    secondParameter = function.getParameter(1)
     if(root.isDynamicValue? && firstParameter.isDynamicValue?)
-      if(firstParameter.infers.size > 0)
-        strClasses = ""
-        root.infers.each do |infer|
-          strClasses = "#{strClasses}#{infer.value},"
-        end
-        strClasses.chop!
-        strValues = ""
-        firstParameter.infers.each do |infer|
-          strValues = "#{strValues}#{infer.value},"
-        end
-        strValues.chop!
-        strIfCase = "if (![#{strClasses}].include?(#{linkedFunction.to_s(function)}) || ![#{strValues}].include?(#{firstParameter.to_s})) #{linkedFunction.to_s}"
-        msg = "Crie a(s) constante(s) #{strValues} na(s) classe(s) #{strClasses} com valor #{secondParameter.to_s}. Adicione tambem a condiçao:\n#{strIfCase}"
-        return true, false, msg
-      else
-        return false, false, "Nao foi possivel inferir os valores da constante a ser criada"
+      infers = firstParameter.infers.to_a
+      privateConstant = isPrivateConstant?(root.infers, infers[0].value)
+      safe = !privateConstant.nil?
+      ifSuggestion = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{linkedFunction.to_s(function)}::#{infers[0].value} = ... #{printConstGetMark(privateConstant)}"
+      for i in 1 .. infers.size - 1
+        privateConstant = isPrivateConstant?(root.infers, infers[i].value)
+        safe = !privateConstant.nil?
+        ifSuggestion += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{linkedFunction.to_s(function)}::#{infers[i].value} = ... #{printConstGetMark(privateConstant)}"
       end
+      ifSuggestion += "\nelse\n  #{linkedFunction.to_s}\nend"
+      return true, safe, ifSuggestion
     end
     return nil, nil, nil
   end
 
   def recommendConstSet(linkedFunction, root, function)
-    secondParameter = function.getParameter(1)
-    if(!function.getParameter(0).nil? && !secondParameter.nil? && !root.nil?)
-      if(root.infers.size == 0)
-        return false, false, "Nao foi possivel inferir as classes que invocam const_set"
-      end
-      if(!secondParameter.isStaticValue?)
-        return false, false, "Segundo parametro e dinamico"
+    firstParameter = function.getParameter(0)
+    if(!firstParameter.nil? && !root.nil?)
+      if(firstParameter.infers.size == 0)
+        return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}"
       end
       [:tryFirstSuggestionToConstSet,
        :trySecondSuggestionToConstSet,

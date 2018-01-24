@@ -17,16 +17,15 @@ class Recommendation
   include ClassVariableGetModule
   include ClassVariableSetModule
 
+  attr_reader :totalDynamicStatements, :recommendationsCounter
   def initValues()
     @recommendations = ""
     @totalDynamicStatements = {}
-    @safeRecommendations = {}
-    @unsafeRecommendations = {}
+    @recommendationsCounter = {}
     [:class_variable_get, :class_variable_set, :const_set, :const_get,
     :instance_variable_set, :instance_variable_get, :send].each do |dynamicStatement|
       @totalDynamicStatements[dynamicStatement] = 0
-      @safeRecommendations[dynamicStatement] = 0
-      @unsafeRecommendations[dynamicStatement] = 0
+      @recommendationsCounter[dynamicStatement] = 0
     end
   end
 
@@ -37,8 +36,18 @@ class Recommendation
   def printGeneralResults()
     [:class_variable_get, :class_variable_set, :const_set, :const_get,
      :instance_variable_set, :instance_variable_get, :send].each do |dynamicStatement|
-      puts "#{dynamicStatement}: #{@totalDynamicStatements[dynamicStatement]}; Safes: #{@safeRecommendations[dynamicStatement]}; Unsafes: #{@unsafeRecommendations[dynamicStatement]}"
+      puts "#{dynamicStatement}: #{@recommendationsCounter[dynamicStatement]} / #{@totalDynamicStatements[dynamicStatement]}"
     end
+  end
+
+  def printLatex(projectName)
+    str = "#{projectName}"
+    [:class_variable_get, :class_variable_set, :const_set, :const_get,
+     :instance_variable_set, :instance_variable_get, :send].each do |dynamicStatement|
+      str += " & #{@recommendationsCounter[dynamicStatement]} / #{@totalDynamicStatements[dynamicStatement]}"
+    end
+    str += " \\\\\\hline"
+    puts str
   end
 
   def recommend()
@@ -90,13 +99,8 @@ class Recommendation
       @totalDynamicStatements[function.methodName] += 1
       success, safeRecommendation, msg = self.send(functionToCall, linkedFunction, root, function)
       if(success)
-        if(safeRecommendation)
-          @safeRecommendations[function.methodName] += 1
-          @recommendations << "Sugestao [safe]: \n#{msg}\n"
-        else
-          @unsafeRecommendations[function.methodName] += 1
-          @recommendations << "Sugestao [unsafe]: \n#{msg}\n"
-        end
+        @recommendationsCounter[function.methodName] += 1
+        @recommendations << "Sugestao: \n#{msg}\n"
       else
         @recommendations << "#{msg}\n"
       end

@@ -14,6 +14,19 @@ class VarAssignmentProcess < BasicProcess
     process(ast)
   end
 
+  def attachVariableInValue(exp, variable)
+    if(exp[0] == :if || exp[0] == :case)
+      implicitReturns = UtilProcess.getImplicitReturn(exp)
+      implicitReturns.each do |implicitReturn|
+        value = UtilProcess.processValue(implicitReturn, @relatedFile, @clazz, @method)
+        value.addListener(variable) if(!value.nil?)
+      end
+    else
+      value = UtilProcess.processValue(exp, @relatedFile, @clazz, @method)
+      value.addListener(variable) if(!value.nil?)
+    end
+  end
+
   def process_lasgn(exp)
     _, varName, valueToAssign = exp
     if(!@method.nil?)
@@ -25,11 +38,9 @@ class VarAssignmentProcess < BasicProcess
       variable = Variable.new(@relatedFile, exp, exp.line, varName) if variable.nil?
       @clazz.addLocalVariable(variable)
     end
-    value = UtilProcess.processValue(valueToAssign, @relatedFile, @clazz, @method)
-    if(!value.nil?)
-      value.addListener(variable)
-    end
+    attachVariableInValue(valueToAssign, variable) if !valueToAssign.nil?
   end
+
 
   def process_iasgn(exp)
     _, varName, valueToAssign = exp
@@ -38,10 +49,7 @@ class VarAssignmentProcess < BasicProcess
       variable = Variable.new(@relatedFile, exp, exp.line, varName)
       @clazz.addInstanceVariable(variable)
     end
-    value = UtilProcess.processValue(valueToAssign, @relatedFile, @clazz, @method)
-    if(!value.nil?)
-      value.addListener(variable)
-    end
+    attachVariableInValue(valueToAssign, variable) if !valueToAssign.nil?
   end
 
   def process_cvasgn(exp)
@@ -51,9 +59,6 @@ class VarAssignmentProcess < BasicProcess
       variable = Variable.new(@relatedFile, exp, exp.line, varName)
       @clazz.addStaticVariable(variable)
     end
-    value = UtilProcess.processValue(valueToAssign, @relatedFile, @clazz, @method)
-    if(!value.nil?)
-      value.addListener(variable)
-    end
+    attachVariableInValue(valueToAssign, variable) if !valueToAssign.nil?
   end
 end
