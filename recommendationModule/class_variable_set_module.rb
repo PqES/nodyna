@@ -38,9 +38,9 @@ module ClassVariableSetModule
     firstParameter = function.getParameter(0)
     secondParameter = function.getParameter(1)
     if(firstParameter.class == LiteralDef && (root.class == SelfInstance))
-      return true, true, "Faca a atribuiçao diretamente: #{firstParameter.value} = ..."
+      return true, true, "Faca a atribuiçao diretamente: #{firstParameter.value} = ...",0
     end
-    return nil,nil,nil
+    return nil,nil,nil,nil
   end
 
 
@@ -60,12 +60,12 @@ module ClassVariableSetModule
           ifSuggestion += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{infers[i].value} = ... #{printMarkToCVS(hasSetter)}"
         end
         ifSuggestion += "\nelse\n  #{linkedFunction.to_s}\nend"
-        return true, safeRecommendation, ifSuggestion
+        return true, safeRecommendation, ifSuggestion,3 + 2 * firstParameter.infers.size
       else
-        return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}"
+        return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}",0
       end
     end
-    return nil,nil,nil
+    return nil,nil,nil,nil
   end
 
   #obj.class_variable_set(:@a, ...)
@@ -76,9 +76,9 @@ module ClassVariableSetModule
       hasSetter = hasStaticSetter?(root.infers, firstParameter.value)
       safeRecommendation = !hasSetter.nil?
       ifSuggestion = "#{linkedFunction.to_s(function)}.#{firstParameter.value.to_s.sub("@@","")} = ... #{printMarkToCVS(hasSetter)}"
-      return true, safeRecommendation, ifSuggestion
+      return true, safeRecommendation, ifSuggestion, 0
     end
-    return nil, nil, nil
+    return nil,nil,nil,nil
   end
 
   #obj.class_variable_set(var, ...)
@@ -97,12 +97,12 @@ module ClassVariableSetModule
           ifValues += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{linkedFunction.to_s(function)}.#{infers[i].value.to_s.sub("@@","")} = ... #{printMarkToCVS(hasSetter)}"
         end
         ifValues += "\nelse\n  #{linkedFunction.to_s}\nend"
-        return true, safeRecommendation, ifValues
+        return true, safeRecommendation, ifValues,3 + 2 * firstParameter.infers.size
       else
-        return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}"
+        return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}",0
       end
     end
-    return nil, nil, nil
+    return nil, nil, nil,nil
   end
 
   def recommendCVS(linkedFunction, root, function)
@@ -112,10 +112,10 @@ module ClassVariableSetModule
        :trySecondSuggestionToCVS,
        :tryThirdSuggestionToCVS,
        :tryForthSuggestionToCVS].each do |methodToMakeSuggestion|
-        success, safeRecommendation, msg = send(methodToMakeSuggestion, linkedFunction, root, function)
-        return success, safeRecommendation,msg if !success.nil?
+        success, safeRecommendation, msg, loc = send(methodToMakeSuggestion, linkedFunction, root, function)
+        return success, safeRecommendation,msg,loc if !success.nil?
       end
     end
-    return false, false, "Sem sugestao"
+    return false, false, "Sem sugestao",0
   end
 end

@@ -37,24 +37,24 @@ module ConstGetModule
     firstParameter = function.getParameter(0)
     if(root.class == SelfInstance && firstParameter.class == LiteralDef)
       msg = "#{firstParameter.value}"
-      return true, true, msg
+      return true, true, msg,0
     end
-    return nil, nil, nil
+    return nil, nil, nil,nil
   end
 
   #const_get(x)
   def trySecondSuggestionToConstGet(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    if(root.class == SelfInstance && firstParameter.isDynamicValue?)
+    if(root.class == SelfInstance && firstParameter.isDynamicValue? && firstParameter.infers.size > 0)
       infers = firstParameter.infers.to_a
       ifSuggestion = "if(#{firstParameter.to_s} == #{infers[0].value})\n  #{infers[0].value}"
       for i in 1 .. infers.size - 1
         ifSuggestion += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{infers[i].value}"
       end
       ifSuggestion += "\nelse\n  #{linkedFunction.to_s}\nend"
-      return true, true, ifSuggestion
+      return true, true, ifSuggestion, 3 + 2 * firstParameter.infers.size
     end
-    return nil, nil, nil
+    return nil,nil,nil,nil
   end
 
   #obj.const_get(:FOO)
@@ -64,15 +64,15 @@ module ConstGetModule
       privateConstant = isPrivateConstant?(root.infers, firstParameter.value)
       safe = !privateConstant.nil?
       suggestion = "#{linkedFunction.to_s(function)}::#{firstParameter.value} #{printConstGetMark(privateConstant)}"
-      return true, safe, suggestion
+      return true, safe, suggestion, 0
     end
-    return nil, nil, nil
+    return nil,nil,nil,nil
   end
 
   #Test.const_get(var) or obj.class.const_get(var)
   def tryForthSuggestionToConstGet(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
-    if(root.isDynamicValue? && firstParameter.isDynamicValue?)
+    if(root.isDynamicValue? && firstParameter.isDynamicValue? && firstParameter.infers.size > 0)
       infers = firstParameter.infers.to_a
       privateConstant = isPrivateConstant?(root.infers, infers[0].value)
       safe = !privateConstant.nil?
@@ -83,9 +83,9 @@ module ConstGetModule
         ifSuggestion += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{linkedFunction.to_s(function)}::#{infers[i].value} #{printConstGetMark(privateConstant)}"
       end
       ifSuggestion += "\nelse\n  #{linkedFunction.to_s}\nend"
-      return true, safe, ifSuggestion
+      return true, safe, ifSuggestion, 3 + 2 * firstParameter.infers.size
     end
-    return nil, nil, nil
+    return nil, nil, nil, nil
   end
 
   def recommendConstGet(linkedFunction, root, function)
@@ -98,10 +98,10 @@ module ConstGetModule
        :trySecondSuggestionToConstGet,
       :tryThirdSuggestionToConstGet,
        :tryForthSuggestionToConstGet].each do |methodToMakeSuggestion|
-        success, safeRecommendation, msg = send(methodToMakeSuggestion, linkedFunction, root, function)
-        return success, safeRecommendation,msg if !success.nil?
+        success, safeRecommendation, msg, loc = send(methodToMakeSuggestion, linkedFunction, root, function)
+        return success, safeRecommendation,msg, loc if !success.nil?
       end
     end
-    return false, false, "Sem sugestao"
+    return false, false, "Sem sugestao", 0
   end
 end

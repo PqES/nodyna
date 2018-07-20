@@ -44,9 +44,9 @@ module SendModule
       privateMethod = isPrivateMethod(rootInfers, firstParameter.value)
       safeRecommendation = !privateMethod.nil?
       msg = "Invoque a funçao #{firstParameter.value} diretamente: #{firstParameter.value}(#{function.parameters_to_s(1)}) #{createSendMark(privateMethod)}"
-      return true, safeRecommendation, msg
+      return true, safeRecommendation, msg, 0
     end
-    return nil, nil, nil
+    return nil, nil, nil, nil
   end
 
   #send(var) or Clazz.send(var) or obj.send(var)
@@ -64,9 +64,9 @@ module SendModule
         ifSuggestion = "#{ifSuggestion}\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{linkedFunction.to_s(function)}.#{infers[i].value}(#{function.parameters_to_s(1)}) #{createSendMark(privateMethod)}"
       end
       ifSuggestion = "#{ifSuggestion}\nelse\n  #{function.to_s}\nend"
-      return true, safeRecommendation, ifSuggestion
+      return true, safeRecommendation, ifSuggestion, 3 + 2 * firstParameter.infers.size
     else
-      return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}"
+      return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}", 0
     end
   end
 
@@ -75,10 +75,10 @@ module SendModule
     if(!firstParameter.nil?)
       [:tryFirstSuggestionToSend,
        :trySecondSuggestionToSend].each do |methodToMakeSuggestion|
-        success, safeRecommendation, msg = send(methodToMakeSuggestion, linkedFunction, root, function)
-        return success, safeRecommendation,msg if !success.nil?
+        success, safeRecommendation, msg, loc = send(methodToMakeSuggestion, linkedFunction, root, function)
+        return success, safeRecommendation,msg, loc if !success.nil?
       end
     end
-    return false, false, "Sem sugestao"
+    return false, false, "Sem sugestao", 0
   end
 end

@@ -40,9 +40,9 @@ module InstanceVariableGetModule
   def tryFirstSuggestionToIVG(linkedFunction, root, function)
     firstParameter = function.getParameter(0)
     if(firstParameter.class == LiteralDef && root.class == ObjectInstance)
-      return true, true, "Chame a variavel diretamente: #{firstParameter.value}"
+      return true, true, "Chame a variavel diretamente: #{firstParameter.value}",0
     end
-    return nil,nil,nil
+    return nil,nil,nil,nil
   end
 
 
@@ -61,12 +61,12 @@ module InstanceVariableGetModule
           ifSuggestion += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{infers[i].value} #{printMarkToIVG(hasGetter)}"
         end
         ifSuggestion += "\nelse\n  #{linkedFunction.to_s}\nend"
-        return true, safeRecommendation, ifSuggestion
+        return true, safeRecommendation, ifSuggestion, 3 + 2 * firstParameter.infers.size
       else
-        return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}"
+        return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}",0
       end
     end
-    return nil,nil,nil
+    return nil,nil,nil,nil
   end
 
   #obj.instance_variable_get(:@a)
@@ -76,9 +76,9 @@ module InstanceVariableGetModule
       hasGetter = hasGetter?(root.infers, firstParameter.value)
       safeRecommendation = !hasGetter.nil?
       ifSuggestion = "#{linkedFunction.to_s(function)}.#{firstParameter.value.to_s.sub("@","")}() #{printMarkToIVG(hasGetter)}"
-      return true, safeRecommendation, ifSuggestion
+      return true, safeRecommendation, ifSuggestion,0
     end
-    return nil, nil, nil
+    return nil, nil, nil, nil
   end
 
   #obj.instance_variable_get(var)
@@ -96,12 +96,12 @@ module InstanceVariableGetModule
           ifValues += "\nelsif(#{firstParameter.to_s} == #{infers[i].value})\n  #{linkedFunction.to_s(function)}.#{infers[i].value.to_s.sub("@","")}() #{printMarkToIVG(hasGetter)}"
         end
         ifValues += "\nelse\n  #{linkedFunction.to_s}\nend"
-        return true, safeRecommendation, ifValues
+        return true, safeRecommendation, ifValues, 3 + 2 * firstParameter.infers.size
       else
-        return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}"
+        return false, false, "Nao foi possivel inferir os valores de #{firstParameter.to_s}", 0
       end
     end
-    return nil, nil, nil
+    return nil, nil, nil, nil
   end
 
   def recommendIVG(linkedFunction, root, function)
@@ -111,10 +111,10 @@ module InstanceVariableGetModule
        :trySecondSuggestionToIVG,
        :tryThirdSuggestionToIVG,
        :tryForthSuggestionToIVG].each do |methodToMakeSuggestion|
-        success, safeRecommendation, msg = send(methodToMakeSuggestion, linkedFunction, root, function)
-        return success, safeRecommendation,msg if !success.nil?
+        success, safeRecommendation, msg, loc = send(methodToMakeSuggestion, linkedFunction, root, function)
+        return success, safeRecommendation,msg, loc if !success.nil?
       end
     end
-    return false, false, "Sem sugestao"
+    return false, false, "Sem sugestao", 0
   end
 end

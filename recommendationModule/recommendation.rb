@@ -17,11 +17,13 @@ class Recommendation
   include ClassVariableGetModule
   include ClassVariableSetModule
 
-  attr_reader :totalDynamicStatements, :recommendationsCounter
+  attr_reader :totalDynamicStatements, :recommendationsCounter, :loc
+
   def initValues()
     @recommendations = ""
     @totalDynamicStatements = {}
     @recommendationsCounter = {}
+    @loc = 0
     [:class_variable_get, :class_variable_set, :const_set, :const_get,
     :instance_variable_set, :instance_variable_get, :send].each do |dynamicStatement|
       @totalDynamicStatements[dynamicStatement] = 0
@@ -38,6 +40,7 @@ class Recommendation
      :instance_variable_set, :instance_variable_get, :send].each do |dynamicStatement|
       puts "#{dynamicStatement}: #{@recommendationsCounter[dynamicStatement]} / #{@totalDynamicStatements[dynamicStatement]}"
     end
+    puts "LOC: #{@loc}"
   end
 
   def printLatex(projectName)
@@ -97,9 +100,10 @@ class Recommendation
     if(!functionToCall.nil?)
       @recommendations << "#{function.methodName} indetificado no arquivo #{function.rbfile} linha #{function.line}\n"
       @totalDynamicStatements[function.methodName] += 1
-      success, safeRecommendation, msg = self.send(functionToCall, linkedFunction, root, function)
+      success, safeRecommendation, msg, loc = self.send(functionToCall, linkedFunction, root, function)
       if(success)
         @recommendationsCounter[function.methodName] += 1
+        @loc += loc
         @recommendations << "Sugestao: \n#{msg}\n"
       else
         @recommendations << "#{msg}\n"

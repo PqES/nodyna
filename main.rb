@@ -3,7 +3,7 @@ require_relative "inferModule/inference"
 require_relative "recommendationModule/recommendation"
 require_relative "util"
 $debug = false
-files = ["/home/elderjr/Documents/git_repositories/nodyna/target_1.rb"]
+files = ["target_1.rb"]
 targets = Util.extractFiles(files)
 DiscoveredClasses.instance.clear()
 puts "Collecting datas..."
